@@ -58,9 +58,9 @@ make run
 
 ## Configuration
 
-### Environment Variables (推荐)
+### Environment Variables (Recommended)
 
-环境变量优先级最高，适合在 Docker/Kubernetes 中使用：
+Environment variables have the highest priority and are suitable for use in Docker/Kubernetes:
 
 | Environment Variable | Default | Description |
 |---------------------|---------|-------------|
@@ -70,7 +70,7 @@ make run
 | `CACHE_DURATION` | `60` | Cache device details (seconds) |
 | `LOG_LEVEL` | `INFO` | Log level (DEBUG/INFO/WARNING/ERROR) |
 
-**Docker Compose 示例**:
+**Docker Compose Example**:
 ```yaml
 environment:
   - SCRUTINY_API_URL=https://smart.example.com
@@ -81,7 +81,7 @@ environment:
 
 ### Command Line Arguments
 
-命令行参数仅在未设置环境变量时生效：
+Command line arguments only take effect when environment variables are not set:
 
 | Argument | Environment Variable | Default |
 |----------|---------------------|---------|
@@ -91,7 +91,7 @@ environment:
 | `--cache-duration` | `CACHE_DURATION` | `60` |
 | `--log-level` | `LOG_LEVEL` | `INFO` |
 
-**本地运行示例**:
+**Local Run Example**:
 ```bash
 python scrutiny_prometheus_exporter.py \
   --api-url http://localhost:8080 \
@@ -453,22 +453,22 @@ python scrutiny_prometheus_exporter.py --log-level DEBUG
 
 ```
 exporter/
-├── scrutiny_prometheus_exporter.py  # 主程序
-├── Dockerfile                        # Docker 镜像构建
-├── docker-compose.yml                # Exporter 单独部署
-├── requirements.txt                  # Python 依赖
-├── Makefile                          # 便捷命令
-├── test_exporter.sh                  # 测试脚本
+├── scrutiny_prometheus_exporter.py  # Main application
+├── Dockerfile                        # Docker image build
+├── docker-compose.yml                # Exporter standalone deployment
+├── requirements.txt                  # Python dependencies
+├── Makefile                          # Convenience commands
+├── test_exporter.sh                  # Test script
 │
 ├── grafana_dashboard.json            # Grafana Dashboard JSON
 │
-├── docs/                             # 文档目录
-│   └── GRAFANA_PANELS.md             # Dashboard 完整指南
+├── docs/                             # Documentation directory
+│   └── GRAFANA_PANELS.md             # Complete Dashboard guide
 │
-├── examples/                         # 示例配置目录
-│   ├── env.example                   # 环境变量示例
-│   ├── prometheus.yml                # Prometheus 抓取配置示例
-│   └── prometheus_alerts.yml         # Prometheus 告警规则
+├── examples/                         # Example configuration directory
+│   ├── env.example                   # Environment variables example
+│   ├── prometheus.yml                # Prometheus scrape configuration example
+│   └── prometheus_alerts.yml         # Prometheus alerting rules
 │
 ├── README.md                         # Main documentation (English)
 ├── README_CN.md                      # Main documentation (Chinese)
