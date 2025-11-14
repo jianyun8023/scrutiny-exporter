@@ -384,7 +384,12 @@ make docker-build
 镜像会自动构建并推送到 GitHub Container Registry：
 
 ```
-ghcr.io/<username>/scrutiny-exporter:latest
+ghcr.io/jianyun8023/scrutiny-exporter:latest
+```
+
+**拉取最新镜像**：
+```bash
+docker pull ghcr.io/jianyun8023/scrutiny-exporter:latest
 ```
 
 ### 多架构支持
@@ -535,6 +540,6 @@ MIT License
 ## 支持
 
 如有问题和疑问：
-- GitHub Issues: [创建 issue](https://github.com/<username>/scrutiny-exporter/issues)
+- GitHub Issues: [创建 issue](https://github.com/jianyun8023/scrutiny-exporter/issues)
 - 文档: 查看本 README
 

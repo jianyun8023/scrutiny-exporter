@@ -384,7 +384,12 @@ make docker-build
 Images are automatically built and pushed to GitHub Container Registry:
 
 ```
-ghcr.io/<username>/scrutiny-exporter:latest
+ghcr.io/jianyun8023/scrutiny-exporter:latest
+```
+
+**Pull the latest image**:
+```bash
+docker pull ghcr.io/jianyun8023/scrutiny-exporter:latest
 ```
 
 ### Multi-Architecture Support
@@ -535,6 +540,6 @@ Contributions are welcome! Please open an issue or submit a pull request.
 ## Support
 
 For issues and questions:
-- GitHub Issues: [Create an issue](https://github.com/<username>/scrutiny-exporter/issues)
+- GitHub Issues: [Create an issue](https://github.com/jianyun8023/scrutiny-exporter/issues)
 - Documentation: See this README
 
