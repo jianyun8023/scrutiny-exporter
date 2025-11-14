@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  scrutiny-exporter:
+    image: scrutiny-prometheus-exporter:latest
+    container_name: scrutiny-prometheus-exporter
+    restart: unless-stopped
+    ports:
+      - "9900:9900"
+    environment:
+      - SCRUTINY_API_URL=https://smart.pve.icu
+      - EXPORTER_PORT=9900
+      - CACHE_DURATION=60
+      - API_TIMEOUT=10
+      - LOG_LEVEL=INFO
+      - TZ=Asia/Shanghai
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9900/metrics"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - monitoring
+
+networks:
+  monitoring:
+    driver: bridge
+

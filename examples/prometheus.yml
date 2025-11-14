@@ -1,0 +1,45 @@
+# Prometheus 配置文件
+# 用于 Scrutiny SMART 监控
+
+global:
+  scrape_interval: 60s      # 全局抓取间隔（SMART 数据更新较慢）
+  evaluation_interval: 60s  # 告警规则评估间隔
+  scrape_timeout: 10s       # 抓取超时
+
+  external_labels:
+    cluster: 'scrutiny-monitoring'
+    replica: 'prometheus-1'
+
+# 告警配置
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - 'alertmanager:9093'  # 取消注释以启用 Alertmanager
+
+# 告警规则文件
+rule_files:
+  - '/etc/prometheus/alerts.yml'
+
+# 抓取配置
+scrape_configs:
+  # Prometheus 自身监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+
+  # Scrutiny SMART Exporter
+  - job_name: 'scrutiny-exporter'
+    static_configs:
+      - targets: ['scrutiny-exporter:9900']
+    scrape_interval: 60s      # SMART 数据每分钟抓取一次即可
+    scrape_timeout: 10s
+    metrics_path: '/metrics'
+    
+    # 可选：添加额外的 labels
+    # relabel_configs:
+    #   - source_labels: [__address__]
+    #     target_label: instance
+    #     replacement: 'scrutiny-smart'
+

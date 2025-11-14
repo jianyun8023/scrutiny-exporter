@@ -1,0 +1,290 @@
+# Scrutiny Prometheus 告警规则
+# 将此文件添加到 Prometheus 的 rule_files 配置中
+
+groups:
+  # ========================================
+  # 磁盘温度告警
+  # ========================================
+  - name: scrutiny_temperature
+    interval: 1m
+    rules:
+      - alert: DiskTemperatureWarning
+        expr: scrutiny_smart_temperature_celsius > 55
+        for: 5m
+        labels:
+          severity: warning
+          category: disk
+        annotations:
+          summary: "磁盘温度过高警告"
+          description: |
+            设备 {{ $labels.device_name }} ({{ $labels.model_name }}) 温度为 {{ $value }}°C
+            WWN: {{ $labels.wwn }}
+            建议检查散热情况
+          
+      - alert: DiskTemperatureCritical
+        expr: scrutiny_smart_temperature_celsius > 65
+        for: 2m
+        labels:
+          severity: critical
+          category: disk
+        annotations:
+          summary: "磁盘温度严重过高"
+          description: |
+            设备 {{ $labels.device_name }} 温度为 {{ $value }}°C，已超过安全阈值！
+            WWN: {{ $labels.wwn }}
+            请立即检查并采取措施！
+
+  # ========================================
+  # 磁盘状态告警
+  # ========================================
+  - name: scrutiny_device_status
+    interval: 1m
+    rules:
+      - alert: DiskFailed
+        expr: scrutiny_device_status > 0
+        for: 1m
+        labels:
+          severity: critical
+          category: disk
+        annotations:
+          summary: "磁盘 SMART 状态异常"
+          description: |
+            设备 {{ $labels.device_name }} ({{ $labels.model_name }}) SMART 状态异常
+            WWN: {{ $labels.wwn }}
+            请立即检查磁盘健康状况！
+
+  # ========================================
+  # SMART 属性告警 - ATA/SATA
+  # ========================================
+  - name: scrutiny_ata_smart_attributes
+    interval: 1m
+    rules:
+      # 重新分配扇区
+      - alert: ReallocatedSectorsDetected
+        expr: scrutiny_smart_attr_5_value{attribute_id="5"} > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: disk
+        annotations:
+          summary: "检测到重新分配扇区"
+          description: |
+            设备 {{ $labels.device_name }} 有 {{ $value }} 个重新分配的扇区
+            WWN: {{ $labels.wwn }}
+            这是磁盘开始出现问题的早期信号
+      
+      # 待处理扇区
+      - alert: PendingSectorsDetected
+        expr: scrutiny_smart_attr_197_value{attribute_id="197"} > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: disk
+        annotations:
+          summary: "检测到待处理扇区"
+          description: |
+            设备 {{ $labels.device_name }} 有 {{ $value }} 个待处理扇区
+            WWN: {{ $labels.wwn }}
+            请立即备份数据并检查磁盘！
+      
+      # 离线不可纠正扇区
+      - alert: OfflineUncorrectableSectors
+        expr: scrutiny_smart_attr_198_value{attribute_id="198"} > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: disk
+        annotations:
+          summary: "检测到离线不可纠正扇区"
+          description: |
+            设备 {{ $labels.device_name }} 有 {{ $value }} 个离线不可纠正扇区
+            WWN: {{ $labels.wwn }}
+            磁盘严重损坏，请立即更换！
+      
+      # UDMA CRC 错误
+      - alert: UDMACrcErrorsHigh
+        expr: scrutiny_smart_attr_199_value{attribute_id="199"} > 10
+        for: 10m
+        labels:
+          severity: warning
+          category: disk
+        annotations:
+          summary: "UDMA CRC 错误过多"
+          description: |
+            设备 {{ $labels.device_name }} 有 {{ $value }} 个 UDMA CRC 错误
+            WWN: {{ $labels.wwn }}
+            可能是线缆或接口问题
+
+  # ========================================
+  # SMART 属性告警 - NVMe
+  # ========================================
+  - name: scrutiny_nvme_smart_attributes
+    interval: 1m
+    rules:
+      # SSD 磨损度
+      - alert: SSDWearHigh
+        expr: scrutiny_smart_attr_percentage_used_value{protocol="NVMe"} > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: disk
+        annotations:
+          summary: "SSD 磨损度较高"
+          description: |
+            设备 {{ $labels.device_name }} 磨损度已达到 {{ $value }}%
+            WWN: {{ $labels.wwn }}
+            建议准备更换 SSD
+      
+      - alert: SSDWearCritical
+        expr: scrutiny_smart_attr_percentage_used_value{protocol="NVMe"} > 90
+        for: 2m
+        labels:
+          severity: critical
+          category: disk
+        annotations:
+          summary: "SSD 磨损度严重"
+          description: |
+            设备 {{ $labels.device_name }} 磨损度已达到 {{ $value }}%
+            WWN: {{ $labels.wwn }}
+            请立即备份数据并更换 SSD！
+      
+      # 可用备用空间
+      - alert: NVMeAvailableSpareLow
+        expr: scrutiny_smart_attr_available_spare_value{protocol="NVMe"} < 20
+        for: 5m
+        labels:
+          severity: warning
+          category: disk
+        annotations:
+          summary: "NVMe 可用备用空间不足"
+          description: |
+            设备 {{ $labels.device_name }} 可用备用空间仅剩 {{ $value }}%
+            WWN: {{ $labels.wwn }}
+            建议监控并准备更换
+      
+      # 介质错误
+      - alert: NVMeMediaErrors
+        expr: scrutiny_smart_attr_media_errors_value{protocol="NVMe"} > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: disk
+        annotations:
+          summary: "NVMe 介质错误"
+          description: |
+            设备 {{ $labels.device_name }} 检测到 {{ $value }} 个介质错误
+            WWN: {{ $labels.wwn }}
+            请立即检查 SSD 健康状况！
+      
+      # 关键警告
+      - alert: NVMeCriticalWarning
+        expr: scrutiny_smart_attr_critical_warning_value{protocol="NVMe"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          category: disk
+        annotations:
+          summary: "NVMe 关键警告"
+          description: |
+            设备 {{ $labels.device_name }} 报告关键警告
+            WWN: {{ $labels.wwn }}
+            请立即检查设备状态！
+
+  # ========================================
+  # 数据采集告警
+  # ========================================
+  - name: scrutiny_exporter_health
+    interval: 1m
+    rules:
+      - alert: ScrutinyExporterDown
+        expr: up{job="scrutiny"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          category: monitoring
+        annotations:
+          summary: "Scrutiny Exporter 离线"
+          description: |
+            Scrutiny Prometheus Exporter 无法访问
+            实例: {{ $labels.instance }}
+            请检查 exporter 服务状态
+      
+      - alert: ScrutinyDataStale
+        expr: time() - scrutiny_smart_collector_timestamp > 600  # 10 分钟
+        for: 5m
+        labels:
+          severity: warning
+          category: monitoring
+        annotations:
+          summary: "Scrutiny 数据过时"
+          description: |
+            设备 {{ $labels.device_name }} 的 SMART 数据已超过 10 分钟未更新
+            最后更新时间: {{ $value | humanizeTimestamp }}
+            请检查 Scrutiny 采集服务
+      
+      - alert: ScrutinyNoDevices
+        expr: scrutiny_devices_total == 0
+        for: 5m
+        labels:
+          severity: critical
+          category: monitoring
+        annotations:
+          summary: "Scrutiny 未监控任何设备"
+          description: |
+            Scrutiny 当前没有监控任何磁盘设备
+            请检查 Scrutiny 配置和磁盘状态
+
+  # ========================================
+  # 磁盘使用时间告警
+  # ========================================
+  - name: scrutiny_disk_wear
+    interval: 1h
+    rules:
+      - alert: DiskHighPowerOnHours
+        expr: scrutiny_smart_power_on_hours > 43800  # 5 年
+        for: 1h
+        labels:
+          severity: info
+          category: disk
+        annotations:
+          summary: "磁盘使用时间较长"
+          description: |
+            设备 {{ $labels.device_name }} 已运行 {{ $value }} 小时（约 5 年）
+            WWN: {{ $labels.wwn }}
+            建议考虑备份并准备更换
+      
+      - alert: DiskVeryHighPowerOnHours
+        expr: scrutiny_smart_power_on_hours > 70080  # 8 年
+        for: 1h
+        labels:
+          severity: warning
+          category: disk
+        annotations:
+          summary: "磁盘使用时间非常长"
+          description: |
+            设备 {{ $labels.device_name }} 已运行 {{ $value }} 小时（超过 8 年）
+            WWN: {{ $labels.wwn }}
+            请尽快备份数据并更换磁盘
+
+# ========================================
+# 使用说明
+# ========================================
+# 1. 将此文件保存到 Prometheus 配置目录，如: /etc/prometheus/rules/scrutiny.yml
+#
+# 2. 在 prometheus.yml 中添加（参考 examples/prometheus.yml）:
+#    rule_files:
+#      - "/etc/prometheus/rules/scrutiny.yml"
+#    或使用相对路径:
+#      - "prometheus_alerts.yml"
+#
+# 3. 重载 Prometheus 配置:
+#    curl -X POST http://localhost:9090/-/reload
+#    # 或
+#    systemctl reload prometheus
+#
+# 4. 验证规则:
+#    promtool check rules /etc/prometheus/rules/scrutiny.yml
+#
+# 5. 在 Prometheus Web UI 中查看:
+#    http://your-prometheus:9090/alerts
+
